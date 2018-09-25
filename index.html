@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Azure Maps Bus Sample</title>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="IE=Edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="This sample shows how to animate the position of a HTML marker on the map by updating the coordinates." />
+    <meta name="keywords" content="map, gis, API, SDK, animate, animation, symbol, pushpin, marker, pin" />
+    <meta name="author" content="Microsoft Azure Maps" />
+    <link href="/SiteResources/azure-maps-logo-13.png" rel="shortcut icon" />
+
+    <!-- Add references to the Azure Maps Map control JavaScript and CSS files. -->
+    <link rel="stylesheet" href="https://atlas.microsoft.com/sdk/css/atlas.min.css?api-version=1" type="text/css" />
+    <script src="https://atlas.microsoft.com/sdk/js/atlas.min.js?api-version=1"></script>
+
+    <script type='text/javascript'>
+        var stateOfCharge = 70;
+        var index = 0;
+        var square = [
+            [5.943313, 51.967033], // Allego
+            [5.942833, 51.969862], // North East corner
+            [5.940322, 51.969659], // Gate
+            [5.940869, 51.966929] // South West corner
+        ];
+
+        var x = square[0][0],
+            y = square[0][1],
+            targetX = square[1][0],
+            targetY = square[1][1],
+            velX = 0,
+            velY = 0,
+            thrust = 0.000005;
+
+        var map, marker, battery;
+        function GetMap() {
+            //Add your Azure Maps subscription key to the map SDK.
+            atlas.setSubscriptionKey('ToMVsfaWwd6YWl1dAjRVNaFmVfJY675OEiMc96ZZrvE');
+            //Initialize a map instance.
+            map = new atlas.Map('myMap', {
+                center: [5.943313, 51.967033],
+                zoom: 15
+            });
+
+            //Wait until the map resources have fully loaded.
+            map.events.add('load', function (e) {
+                //Create a HTML marker and add it to the map.
+                marker = new atlas.HtmlMarker({
+                    htmlContent: '<image class="bus-image" src="icons8-bus-24.png" onclick="busClicked()" /><div class="battery green" style="width: 55px; display: none;"></div>',
+                    position: [0, 0]
+                });
+                map.markers.add(marker);
+                //Start the animation.
+                animateMarker();
+
+                battery = document.getElementsByClassName("battery")[0];
+                
+
+                setInterval(function() {
+                    if (stateOfCharge > 0){
+                        stateOfCharge -= 1;
+                    }
+                    if (stateOfCharge < 50 && stateOfCharge > 25) {
+                        battery.classList.remove("green");
+                        battery.classList.add("orange");
+                    } else if (stateOfCharge < 25) {
+                        battery.classList.remove("orange");
+                        battery.classList.add("red");
+                    }
+                    
+                    battery.style.width = stateOfCharge + "px";
+                }, 500)
+            });
+        }
+        function positionOnMap() {
+            //Calculate the position on a circle for an angle of animation.
+            var tx = targetX - x,
+                ty = targetY - y,
+                dist = Math.sqrt(tx*tx+ty*ty),
+                rad = Math.atan2(ty,tx),
+                angle = rad/Math.PI * 180;;
+
+            velX = (tx/dist)*thrust;
+            velY = (ty/dist)*thrust;
+
+            if (dist > 0.00001){
+                x += velX;
+                y += velY;
+            } else {
+                if (index == 3) {
+                    index = 0;
+                } else{
+                    index += 1;
+                }
+
+                targetX = square[index][0];
+                targetY = square[index][1];
+            }
+
+            return [x, y];
+        }
+        function animateMarker() {
+            // Update the position of the marker for the animation frame.
+            marker.setOptions({
+                position: positionOnMap()
+            });
+            if (stateOfCharge > 0){
+                // Request the next frame of the animation.
+                requestAnimationFrame(animateMarker);
+            }
+        }
+
+        function busClicked() {
+            
+            if (battery.style.display === "none"){
+                battery.style.display = "block";
+            } else {
+                battery.style.display = "none";
+            }
+        }        
+    </script>
+    <style>
+        .battery {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            background: #000;
+            width: 50px;
+            height: 28px;
+            float: left;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .battery:before {
+            content: "";
+            display: block;
+            background: transparent;
+            border: 6px solid #000;
+            margin: -12px;
+            width: 85px;
+            height: 40px;
+            position: absolute;
+            border-radius: 2px;
+        }
+
+        .battery:after {
+            content: "";
+            display: block;
+            background: transparent;
+            border: 6px solid #000;
+            margin: 0px 80px;
+            width: 6px;
+            height: 16px;
+            position: absolute;
+            border-radius: 2px;
+        }
+
+        .bus-image:hover {
+            cursor: pointer;
+        }
+
+        .green {
+            background: green; 
+        }
+
+        .orange {
+            background: orange; 
+        }
+
+        .red {
+            background: red; 
+        }
+
+    </style>
+</head>
+<body onload='GetMap()'>
+    <div id='myMap' style='position:relative;width:800px;height:600px;'></div>
+    <h1>Click on the bus to see the State of Charge</h1>
+    <p>Created by: Dibran Mulder</p>
+    <p>Solution Architect @Cloud Republic</p>
+</body>
+</html>
