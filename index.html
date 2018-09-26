@@ -19,9 +19,9 @@
         var stateOfCharge = 70;
         var index = 0;
         var square = [
-            [5.943313, 51.967033], // Allego
+            [5.943550, 51.967233], // Allego
             [5.942833, 51.969862], // North East corner
-            [5.940322, 51.969659], // Gate
+            [5.940022, 51.969600], // Gate
             [5.940869, 51.966929] // South West corner
         ];
 
@@ -36,7 +36,7 @@
         var map, marker, battery;
         function GetMap() {
             //Add your Azure Maps subscription key to the map SDK.
-            atlas.setSubscriptionKey('key');
+            atlas.setSubscriptionKey('ToMVsfaWwd6YWl1dAjRVNaFmVfJY675OEiMc96ZZrvE');
             //Initialize a map instance.
             map = new atlas.Map('myMap', {
                 center: [5.943313, 51.967033],
@@ -50,13 +50,29 @@
                     htmlContent: '<image class="bus-image" src="icons8-bus-24.png" onclick="busClicked()" /><div class="battery green" style="width: 55px; display: none;"></div>',
                     position: [0, 0]
                 });
+
+                //Create a data source and add it to the map.
+                var datasource = new atlas.source.DataSource();
+                map.sources.add(datasource);
+                //Add line to data source.
+                datasource.add(new atlas.data.LineString([
+                    [5.943550, 51.967233], // Allego
+                    [5.942833, 51.969862], // North East corner
+                    [5.940022, 51.969600], // Gate
+                    [5.940869, 51.966929], // South West corner
+                    [5.943550, 51.967233]  // Allego
+                ]));
+
+                //Create a layer to render the line data.
+                lineLayer = new atlas.layer.LineLayer(datasource);
+                map.layers.add(lineLayer);
+
                 map.markers.add(marker);
                 //Start the animation.
                 animateMarker();
 
                 battery = document.getElementsByClassName("battery")[0];
                 
-
                 setInterval(function() {
                     if (stateOfCharge > 0){
                         stateOfCharge -= 1;
